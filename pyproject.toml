@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "airflow-project"
+version = "0.1.0"
+description = ""
+authors = ["Swapnil Sankla <swapnils@sahaj.ai>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.12.5"
+apache-airflow = "^2.8.1"
+apache-airflow-providers-postgres = "^5.12.0"
+apache-airflow-providers-amazon = "^8.28.0"
+pandas = "^2.2.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
