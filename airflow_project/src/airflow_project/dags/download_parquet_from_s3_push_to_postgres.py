@@ -19,7 +19,7 @@ dag = DAG('download_parquet_from_s3_push_to_postgres',
 
 is_parquet_file_available = S3KeySensor(
     task_id='is_parquet_file_available',
-    aws_conn_id=os.getenv('AWS_CONN_ID', 'aws_minio'),
-    bucket_name=os.getenv('S3_BUCKET_NAME', 'data'),
-    bucket_key= os.getenv('PARQUET_FILE_NAME', 'user-data.parquet'),
+    aws_conn_id=os.getenv('AWS_CONN_ID'),
+    bucket_name=os.getenv('S3_BUCKET_NAME'),
+    bucket_key= os.getenv('PARQUET_FILE_NAME'),
     dag=dag)

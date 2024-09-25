@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 from airflow.models import DagBag
 
 class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
@@ -29,11 +30,20 @@ class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
         expected_task_dependencies = []
         self.assertEqual(self.__get_downstream_task_ids(task), expected_task_dependencies)
 
+    @mock.patch.dict('os.environ', {
+        'AWS_CONN_ID': 'test_aws_conn_id',
+        'S3_BUCKET_NAME': 'test',
+        'PARQUET_FILE_NAME': 'test-data.parquet'
+    })
     def test_is_parquet_file_available_task_configuration(self):
-        task = self.dag.get_task('is_parquet_file_available')
-        self.assertEqual(task.aws_conn_id, 'aws_minio')
-        self.assertEqual(task.bucket_name, 'data')
-        self.assertEqual(task.bucket_key, 'user-data.parquet')
+        # Need to create a new DagBag to load the environment variables
+        dagbag = DagBag(dag_folder='src/airflow_project/dags', include_examples=False)
+        dag = dagbag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
+        task = dag.get_task('is_parquet_file_available')
+        
+        self.assertEqual(task.aws_conn_id, 'test_aws_conn_id')
+        self.assertEqual(task.bucket_name, 'test')
+        self.assertEqual(task.bucket_key, 'test-data.parquet')
 
     def __get_downstream_task_ids(self, task_id):
         task = self.dag.get_task(task_id)
