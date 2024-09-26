@@ -6,6 +6,7 @@ from airflow_project_test.util.project_path import ProjectPath
 
 from airflow_project.dags.download_parquet_from_s3_push_to_postgres import ModelConverter
 
+# pylint: disable=W0621: redefined-outer-name
 @pytest.fixture
 def csv_cleaned_file_path():
     return os.path.join(ProjectPath.get(), 'test/data/cleaned-user-data.csv')

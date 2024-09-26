@@ -5,6 +5,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from airflow.models import DagBag
 from airflow_project_test.util.project_path import ProjectPath
 
+# pylint: disable=W0621: redefined-outer-name
 @pytest.fixture
 def dag_bag():
     monkeypatch = MonkeyPatch()
@@ -35,7 +36,7 @@ def test_dag_retry_delay(dag):
     assert dag.default_args['retry_delay'].total_seconds() == 300
 
 def test_dag_catchup(dag):
-    assert dag.default_args['catchup'] == False
+    assert dag.default_args['catchup'] is False
 
 def test_dag_owner(dag):
     assert dag.default_args['owner'] == 'airflow'
