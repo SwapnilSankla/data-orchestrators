@@ -9,6 +9,10 @@
 ### Install dependencies
 `poerty install`
 
+### Lint
+- Change directory to airflow_project
+- Run `pylint --fail-under=9 .`
+
 ### Run Unit tests
 - Change directory to airflow_project
 - Start Poetry shell with `poetry shell`
