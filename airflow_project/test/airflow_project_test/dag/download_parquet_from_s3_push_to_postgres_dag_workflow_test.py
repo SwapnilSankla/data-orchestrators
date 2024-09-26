@@ -30,7 +30,7 @@ class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
         self.assertEqual(self.dag.default_args['owner'], 'airflow')
 
     def test_number_of_tasks(self):
-        self.assertEqual(len(self.dag.tasks), 3)
+        self.assertEqual(len(self.dag.tasks), 4)
 
     def test_dependencies_is_parquet_file_available(self):
         task = 'is_parquet_file_available'
@@ -44,6 +44,11 @@ class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
 
     def test_dependencies_convert_parquet_to_csv(self):
         task = 'convert_parquet_to_csv'
+        expected_task_dependencies = ['convert_to_model']
+        self.assertEqual(self.__get_downstream_task_ids(task), expected_task_dependencies)
+
+    def test_dependencies_convert_to_model(self):
+        task = 'convert_to_model'
         expected_task_dependencies = []
         self.assertEqual(self.__get_downstream_task_ids(task), expected_task_dependencies)
 
@@ -86,6 +91,18 @@ class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
         dag = dag_bag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
         task = dag.get_task('convert_parquet_to_csv')
         self.assertEqual(task.csv_file_path, 'test-data.csv')
+
+    @mock.patch.dict('os.environ', {
+        'CSV_FILE_PATH': 'test-data.csv',
+        'CLEANED_CSV_FILE_PATH': 'test-data-cleaned.csv'
+    })
+    def test_convert_to_model_task_configuration(self):
+        # Need to create a new DagBag to load the environment variables
+        dag_bag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
+        dag = dag_bag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
+        task = dag.get_task('convert_to_model')
+        self.assertEqual(task.csv_file_path, 'test-data.csv')
+        self.assertEqual(task.csv_cleaned_file_path, 'test-data-cleaned.csv')
 
     def __get_downstream_task_ids(self, task_id):
         task = self.dag.get_task(task_id)

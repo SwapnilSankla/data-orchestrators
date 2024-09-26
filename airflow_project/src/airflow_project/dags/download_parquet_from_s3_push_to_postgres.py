@@ -1,11 +1,39 @@
 import os
 from datetime import datetime, timedelta
 from airflow import DAG
+from airflow.models import BaseOperator
 from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
-from airflow_project.custom_operator.parquet_to_csv_converter import ParquetToCsvOperator
+# TODO: Extract this to custom operator. Right now it is in the DAG file as
+#  while running in docker compose, Airflow is not able to find the custom operator
+class ParquetToCsvOperator(BaseOperator):
+    def __init__(self, parquet_file_path_provider_task_id, csv_file_path, **kwargs):
+        super().__init__(**kwargs)
+        self.csv_file_path = csv_file_path
+        self.parquet_file_path_provider_task_id = parquet_file_path_provider_task_id
+
+    def execute(self, context):
+        import pandas as pd
+        parquet_file_path = context['ti'].xcom_pull(task_ids=self.parquet_file_path_provider_task_id)
+        df = pd.read_parquet(parquet_file_path)
+        df.to_csv(self.csv_file_path, index=False)
+
+# TODO: Extract this to custom operator. Right now it is in the DAG file as
+#  while running in docker compose, Airflow is not able to find the custom operator
+class ModelConverter(BaseOperator):
+    def __init__(self, csv_file_path, csv_cleaned_file_path, **kwargs):
+        super().__init__(**kwargs)
+        self.csv_file_path = csv_file_path
+        self.csv_cleaned_file_path = csv_cleaned_file_path
+
+    def execute(self, context):
+        import pandas as pd
+        df = pd.read_csv(self.csv_file_path)
+        df['name'] = df['First name'] + ' ' + df['last name']
+        df.drop(columns=['First name', 'last name'], inplace=True)
+        df.to_csv(self.csv_cleaned_file_path, index=False)
 
 default_args = {
     'owner': 'airflow',
@@ -15,20 +43,22 @@ default_args = {
     'catchup': False,
 }
 
+
 def download_file(aws_conn_id, bucket_name, bucket_key):
     return S3Hook(aws_conn_id).download_file(key=bucket_key, bucket_name=bucket_name, local_path='.')
 
-dag = DAG('download_parquet_from_s3_push_to_postgres', 
-          default_args=default_args, 
-          description='This DAG downloads parquet file from S3 and pushes it to Postgres', 
-          schedule='@daily', 
-          start_date=datetime(2024, 9, 11))    
+
+dag = DAG('download_parquet_from_s3_push_to_postgres',
+          default_args=default_args,
+          description='This DAG downloads parquet file from S3 and pushes it to Postgres',
+          schedule='@daily',
+          start_date=datetime(2024, 9, 11))
 
 is_parquet_file_available = S3KeySensor(
     task_id='is_parquet_file_available',
     aws_conn_id=os.getenv('AWS_CONN_ID'),
     bucket_name=os.getenv('S3_BUCKET_NAME'),
-    bucket_key= os.getenv('PARQUET_FILE_NAME'),
+    bucket_key=os.getenv('PARQUET_FILE_NAME'),
     dag=dag)
 
 download_parquet_from_s3 = PythonOperator(
@@ -47,5 +77,12 @@ convert_parquet_to_csv = ParquetToCsvOperator(
     csv_file_path=os.getenv('CSV_FILE_PATH'),
     dag=dag)
 
+model_converter = ModelConverter(
+    task_id='convert_to_model',
+    csv_file_path=os.getenv('CSV_FILE_PATH'),
+    csv_cleaned_file_path=os.getenv('CLEANED_CSV_FILE_PATH'),
+    dag=dag)
+
 is_parquet_file_available >> download_parquet_from_s3
-download_parquet_from_s3  >> convert_parquet_to_csv
+download_parquet_from_s3 >> convert_parquet_to_csv
+convert_parquet_to_csv >> model_converter

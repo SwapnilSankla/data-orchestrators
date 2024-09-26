@@ -15,6 +15,7 @@ x-airflow-common:
     AWS_CONN_ID:
     S3_BUCKET_NAME:
     CSV_FILE_PATH:
+    CLEANED_CSV_FILE_PATH:
 
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/src/airflow_project/dags:/opt/airflow/dags
