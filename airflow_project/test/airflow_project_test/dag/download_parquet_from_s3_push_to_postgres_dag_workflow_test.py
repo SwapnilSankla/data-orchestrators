@@ -11,8 +11,8 @@ class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
     def setUp(self):
         self.dag_folder_path = os.path.join(ProjectPath.get(), 'src/airflow_project/dags')
 
-        self.dagbag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
-        self.dag = self.dagbag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
+        self.dagBag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
+        self.dag = self.dagBag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
 
     def test_dag_schedule_interval(self):
         self.assertEqual(self.dag.schedule_interval, '@daily')
@@ -54,8 +54,8 @@ class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
     })
     def test_is_parquet_file_available_task_configuration(self):
         # Need to create a new DagBag to load the environment variables
-        dagbag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
-        dag = dagbag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
+        dag_bag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
+        dag = dag_bag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
         task = dag.get_task('is_parquet_file_available')
 
         self.assertEqual(task.aws_conn_id, 'test_aws_conn_id')
@@ -69,8 +69,8 @@ class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
     })
     def test_download_parquet_from_s3_task_configuration(self):
         # Need to create a new DagBag to load the environment variables
-        dagbag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
-        dag = dagbag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
+        dag_bag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
+        dag = dag_bag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
         task = dag.get_task('download_parquet_from_s3')
 
         self.assertEqual(task.op_kwargs['aws_conn_id'], 'test_aws_conn_id')
@@ -82,8 +82,8 @@ class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
     })
     def test_convert_parquet_to_csv_task_configuration(self):
         # Need to create a new DagBag to load the environment variables
-        dagbag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
-        dag = dagbag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
+        dag_bag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
+        dag = dag_bag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
         task = dag.get_task('convert_parquet_to_csv')
         self.assertEqual(task.csv_file_path, 'test-data.csv')
 
