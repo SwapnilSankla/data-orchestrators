@@ -1,10 +1,8 @@
 import os
 import unittest
-
 import pandas as pd
-
-from airflow_project.dags.download_parquet_from_s3_push_to_postgres import ModelConverter
 from airflow_project_test.util.project_path import ProjectPath
+from airflow_project.dags.download_parquet_from_s3_push_to_postgres import ModelConverter
 
 
 class ModelConverterTest(unittest.TestCase):
@@ -23,4 +21,3 @@ class ModelConverterTest(unittest.TestCase):
         self.assertEqual(df['Age'].tolist(), [30, 35])
 
         os.remove(csv_cleaned_file_path)
-

@@ -7,10 +7,9 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+import pandas
 
 
-# TODO: Extract this to custom operator. Right now it is in the DAG file as
-#  while running in docker compose, Airflow is not able to find the custom operator
 class ParquetToCsvOperator(BaseOperator):
     def __init__(self, parquet_file_path_provider_task_id, csv_file_path, **kwargs):
         super().__init__(**kwargs)
@@ -18,14 +17,11 @@ class ParquetToCsvOperator(BaseOperator):
         self.parquet_file_path_provider_task_id = parquet_file_path_provider_task_id
 
     def execute(self, context):
-        import pandas as pd
         parquet_file_path = context['ti'].xcom_pull(task_ids=self.parquet_file_path_provider_task_id)
-        df = pd.read_parquet(parquet_file_path)
+        df = pandas.read_parquet(parquet_file_path)
         df.to_csv(self.csv_file_path, index=False)
 
 
-# TODO: Extract this to custom operator. Right now it is in the DAG file as
-#  while running in docker compose, Airflow is not able to find the custom operator
 class ModelConverter(BaseOperator):
     def __init__(self, csv_file_path, csv_cleaned_file_path, **kwargs):
         super().__init__(**kwargs)
@@ -33,8 +29,7 @@ class ModelConverter(BaseOperator):
         self.csv_cleaned_file_path = csv_cleaned_file_path
 
     def execute(self, context):
-        import pandas as pd
-        df = pd.read_csv(self.csv_file_path)
+        df = pandas.read_csv(self.csv_file_path)
         df['name'] = df['First name'] + ' ' + df['last name']
         df.drop(columns=['First name', 'last name'], inplace=True)
         df.to_csv(self.csv_cleaned_file_path, index=False)
@@ -49,16 +44,16 @@ default_args = {
 }
 
 
-def download_file(aws_conn_id, bucket_name, bucket_key):
+def __download_file(aws_conn_id, bucket_name, bucket_key):
     return S3Hook(aws_conn_id).download_file(key=bucket_key, bucket_name=bucket_name, local_path='.')
 
 
-def insert(csv_cleaned_file_path):
+def __insert(csv_cleaned_file_path):
     insert_into_postgres_table = PostgresHook(postgres_conn_id=os.getenv('POSTGRES_CONN_ID'), schema='airflow')
     connection = insert_into_postgres_table.get_conn()
     cursor = connection.cursor()
     transformed_data = []
-    with open(csv_cleaned_file_path, 'r') as f:
+    with open(csv_cleaned_file_path, 'r', encoding='utf-8') as f:
         f.readlines().pop(0)
         for line in f.readlines():
             transformed_data.append(tuple(line.strip().split(',')))
@@ -86,7 +81,7 @@ is_parquet_file_available = S3KeySensor(
 
 download_parquet_from_s3 = PythonOperator(
     task_id='download_parquet_from_s3',
-    python_callable=download_file,
+    python_callable=__download_file,
     op_kwargs={
         'aws_conn_id': os.getenv('AWS_CONN_ID'),
         'bucket_name': os.getenv('S3_BUCKET_NAME'),
@@ -119,12 +114,10 @@ create_table_if_not_exists = SQLExecuteQueryOperator(
 
 insert_into_table = PythonOperator(
     task_id='insert_into_table',
-    python_callable=insert,
+    python_callable=__insert,
     op_args=[os.getenv('CLEANED_CSV_FILE_PATH')],
     dag=dag)
 
-is_parquet_file_available >> download_parquet_from_s3
-download_parquet_from_s3 >> convert_parquet_to_csv
-convert_parquet_to_csv >> model_converter
-model_converter >> create_table_if_not_exists
-create_table_if_not_exists >> insert_into_table
+# pylint: disable=W0104
+is_parquet_file_available >> download_parquet_from_s3 >> convert_parquet_to_csv >> model_converter
+model_converter >> create_table_if_not_exists >> insert_into_table

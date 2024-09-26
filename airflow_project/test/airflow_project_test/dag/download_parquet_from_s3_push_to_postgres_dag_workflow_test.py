@@ -11,8 +11,8 @@ class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
     def setUp(self):
         self.dag_folder_path = os.path.join(ProjectPath.get(), 'src/airflow_project/dags')
 
-        self.dagBag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
-        self.dag = self.dagBag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
+        self.dag_bag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
+        self.dag = self.dag_bag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
 
     def test_dag_schedule_interval(self):
         self.assertEqual(self.dag.schedule_interval, '@daily')
