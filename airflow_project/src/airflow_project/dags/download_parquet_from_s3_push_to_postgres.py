@@ -5,6 +5,9 @@ from airflow.models import BaseOperator
 from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+
 
 # TODO: Extract this to custom operator. Right now it is in the DAG file as
 #  while running in docker compose, Airflow is not able to find the custom operator
@@ -19,6 +22,7 @@ class ParquetToCsvOperator(BaseOperator):
         parquet_file_path = context['ti'].xcom_pull(task_ids=self.parquet_file_path_provider_task_id)
         df = pd.read_parquet(parquet_file_path)
         df.to_csv(self.csv_file_path, index=False)
+
 
 # TODO: Extract this to custom operator. Right now it is in the DAG file as
 #  while running in docker compose, Airflow is not able to find the custom operator
@@ -35,6 +39,7 @@ class ModelConverter(BaseOperator):
         df.drop(columns=['First name', 'last name'], inplace=True)
         df.to_csv(self.csv_cleaned_file_path, index=False)
 
+
 default_args = {
     'owner': 'airflow',
     'start_date': datetime(2024, 9, 24),
@@ -46,6 +51,24 @@ default_args = {
 
 def download_file(aws_conn_id, bucket_name, bucket_key):
     return S3Hook(aws_conn_id).download_file(key=bucket_key, bucket_name=bucket_name, local_path='.')
+
+
+def insert(csv_cleaned_file_path):
+    insert_into_postgres_table = PostgresHook(postgres_conn_id=os.getenv('POSTGRES_CONN_ID'), schema='airflow')
+    connection = insert_into_postgres_table.get_conn()
+    cursor = connection.cursor()
+    transformed_data = []
+    with open(csv_cleaned_file_path, 'r') as f:
+        f.readlines().pop(0)
+        for line in f.readlines():
+            transformed_data.append(tuple(line.strip().split(',')))
+
+    for record in transformed_data:
+        cursor.execute('INSERT INTO user_data(age, Name) VALUES (%s, %s)', record)
+
+    connection.commit()
+    cursor.close()
+    connection.close()
 
 
 dag = DAG('download_parquet_from_s3_push_to_postgres',
@@ -83,6 +106,25 @@ model_converter = ModelConverter(
     csv_cleaned_file_path=os.getenv('CLEANED_CSV_FILE_PATH'),
     dag=dag)
 
+create_table_if_not_exists = SQLExecuteQueryOperator(
+    task_id='create_table_if_not_exists',
+    conn_id=os.getenv('POSTGRES_CONN_ID'),
+    sql='''
+        CREATE TABLE IF NOT EXISTS user_data (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(100),
+            age INT)
+    ''',
+    dag=dag)
+
+insert_into_table = PythonOperator(
+    task_id='insert_into_table',
+    python_callable=insert,
+    op_args=[os.getenv('CLEANED_CSV_FILE_PATH')],
+    dag=dag)
+
 is_parquet_file_available >> download_parquet_from_s3
 download_parquet_from_s3 >> convert_parquet_to_csv
 convert_parquet_to_csv >> model_converter
+model_converter >> create_table_if_not_exists
+create_table_if_not_exists >> insert_into_table
