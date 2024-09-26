@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from airflow.operators.python import PythonOperator
+from airflow.models.baseoperator import BaseOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
 default_args = {
@@ -12,6 +13,17 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
     'catchup': False,
 }
+
+class ParquetToCsvOperator(BaseOperator):
+    def __init__(self, csv_file_path, **kwargs):
+        super().__init__(**kwargs)
+        self.csv_file_path = csv_file_path
+
+    def execute(self, context):
+        import pandas as pd
+        self.parquet_file_path = context['ti'].xcom_pull(task_ids='download_parquet_from_s3')
+        df = pd.read_parquet(self.parquet_file_path)
+        df.to_csv(self.csv_file_path, index=False)
 
 def download_file(aws_conn_id, bucket_name, bucket_key):
     return S3Hook(aws_conn_id).download_file(key=bucket_key, bucket_name=bucket_name, local_path='.')
@@ -39,4 +51,10 @@ download_parquet_from_s3 = PythonOperator(
     },
     dag=dag)
 
+convert_parquet_to_csv = ParquetToCsvOperator(
+    task_id='convert_parquet_to_csv',
+    csv_file_path=os.getenv('CSV_FILE_PATH'),
+    dag=dag)
+
 is_parquet_file_available >> download_parquet_from_s3
+download_parquet_from_s3  >> convert_parquet_to_csv
