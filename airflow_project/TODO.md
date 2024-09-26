@@ -1,6 +1,5 @@
 ### TODOs
 
-- Why both pytest and unittest are used in the project?
 - Extract ParquetToCsvOperator and ModelConverter to custom operators. Check why those imports are not working inside docker compose
 - Why Pycharm fails to detect import `from airflow_project_test.util.project_path import ProjectPath`
 - Write E2E tests for the project
