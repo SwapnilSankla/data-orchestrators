@@ -43,6 +43,7 @@ download_parquet_from_s3 = PythonOperator(
 
 convert_parquet_to_csv = ParquetToCsvOperator(
     task_id='convert_parquet_to_csv',
+    parquet_file_path_provider_task_id='download_parquet_from_s3',
     csv_file_path=os.getenv('CSV_FILE_PATH'),
     dag=dag)
 
