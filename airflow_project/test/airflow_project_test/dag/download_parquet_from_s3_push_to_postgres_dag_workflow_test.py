@@ -4,11 +4,13 @@ from unittest import mock
 
 from airflow.models import DagBag
 
+
 class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
 
     def setUp(self):
         # TODO: Need cleaner way to get project path
-        self.project_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.project_path = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         self.dag_folder_path = os.path.join(self.project_path, 'src/airflow_project/dags')
 
         self.dagbag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
