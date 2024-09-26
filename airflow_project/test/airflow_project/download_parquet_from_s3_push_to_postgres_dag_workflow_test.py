@@ -1,10 +1,17 @@
+import os
 import unittest
 from unittest import mock
+
 from airflow.models import DagBag
 
 class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
+
     def setUp(self):
-        self.dagbag = DagBag(dag_folder='src/airflow_project/dags', include_examples=False)
+        # TODO: Need cleaner way to get project path
+        self.project_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.dag_folder_path = os.path.join(self.project_path, 'src/airflow_project/dags')
+
+        self.dagbag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
         self.dag = self.dagbag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
 
     def test_dag_schedule_interval(self):
@@ -47,7 +54,7 @@ class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
     })
     def test_is_parquet_file_available_task_configuration(self):
         # Need to create a new DagBag to load the environment variables
-        dagbag = DagBag(dag_folder='src/airflow_project/dags', include_examples=False)
+        dagbag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
         dag = dagbag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
         task = dag.get_task('is_parquet_file_available')
 
@@ -62,7 +69,7 @@ class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
     })
     def test_download_parquet_from_s3_task_configuration(self):
         # Need to create a new DagBag to load the environment variables
-        dagbag = DagBag(dag_folder='src/airflow_project/dags', include_examples=False)
+        dagbag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
         dag = dagbag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
         task = dag.get_task('download_parquet_from_s3')
 
@@ -75,11 +82,11 @@ class TestDownloadParquetFromS3PushToPostgresDagValidation(unittest.TestCase):
     })
     def test_convert_parquet_to_csv_task_configuration(self):
         # Need to create a new DagBag to load the environment variables
-        dagbag = DagBag(dag_folder='src/airflow_project/dags', include_examples=False)
+        dagbag = DagBag(dag_folder=self.dag_folder_path, include_examples=False)
         dag = dagbag.get_dag(dag_id='download_parquet_from_s3_push_to_postgres')
         task = dag.get_task('convert_parquet_to_csv')
         self.assertEqual(task.csv_file_path, 'test-data.csv')
 
     def __get_downstream_task_ids(self, task_id):
         task = self.dag.get_task(task_id)
-        return list(map(lambda task: task.task_id, task.downstream_list))
+        return list(map(lambda t: t.task_id, task.downstream_list))
