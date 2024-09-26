@@ -1,5 +1,11 @@
 # Airflow project
 
+## Local setup
+
+### Setup Airflow home directory
+- Change directory to airflow_project
+- Run `export AIRFLOW_HOME=${pwd}`
+
 ### Install dependencies
 `poerty install`
 

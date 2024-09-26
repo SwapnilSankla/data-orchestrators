@@ -3,3 +3,5 @@ docker_compose_s3_data/
 logs/
 __pycache__/
 .idea/
+**/airflow.db
+**/airflow.cfg
