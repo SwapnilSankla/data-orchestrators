@@ -13,7 +13,6 @@
 - Change directory to airflow_project
 - Start Poetry shell with `poetry shell`
 - From the root folder run `airflow db init && poetry run pytest`
-- Coverage report `pytest --cov=src test/`
 
 ### Command to run docker containers via docker compose
 - Change directory to airflow_project
