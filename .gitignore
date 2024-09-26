@@ -5,3 +5,4 @@ __pycache__/
 .idea/
 **/airflow.db
 **/airflow.cfg
+**/.coverage
