@@ -6,17 +6,9 @@
 - Change directory to airflow_project
 - Run `export AIRFLOW_HOME=${pwd}`
 
-### Install dependencies
-`poerty install`
-
-### Lint
+### Run tests
 - Change directory to airflow_project
-- Run `pylint --fail-under=9 .`
-
-### Run Unit tests
-- Change directory to airflow_project
-- Start Poetry shell with `poetry shell`
-- From the root folder run `airflow db init && poetry run pytest`
+- Run `poetry run tox`
 
 ### Command to run docker containers via docker compose
 - Change directory to airflow_project

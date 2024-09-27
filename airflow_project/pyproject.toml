@@ -18,6 +18,4 @@ pylint = "^3.3.1"
 pre-commit = "^3.8.0"
 pytest-cov = "^5.0.0"
 black = "^24.8.0"
-
-[tool.pytest.ini_options]
-addopts = "--cov=src --cov-fail-under=69 --cov-report html --cov-report term"
+tox = "^4.20.0"
