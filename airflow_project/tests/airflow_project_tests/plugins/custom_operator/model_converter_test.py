@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 import pytest
-from airflow_project_tests.util.project_path import ProjectPath
+from tests.util.project_path import ProjectPath
 
 from airflow_project.plugins.custom_operator.model_converter import ModelConverter
 

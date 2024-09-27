@@ -3,7 +3,7 @@ import os
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from airflow.models import DagBag
-from airflow_project_tests.util.project_path import ProjectPath
+from tests.util.project_path import ProjectPath
 
 
 # pylint: disable=W0621: redefined-outer-name
