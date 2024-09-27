@@ -114,5 +114,5 @@ insert_into_table = PythonOperator(
     >> download_parquet_from_s3
     >> convert_parquet_to_csv
     >> model_converter
+    >> create_table_if_not_exists >> insert_into_table
 )
-model_converter >> create_table_if_not_exists >> insert_into_table

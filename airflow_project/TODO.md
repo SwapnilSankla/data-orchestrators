@@ -1,9 +1,9 @@
 ### TODOs
 
 - Write E2E tests for the project
-- Use secret backend for Airflow
+- Add volume for vault container to avoid setup every time
 - Use CI/CD for the project
 - Use Terraform to create the infrastructure
 - Run Airflow with either ECS/EKS on AWS
-- Observability
+- Observability, Logging
 

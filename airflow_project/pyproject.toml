@@ -10,6 +10,7 @@ python = "3.12.5"
 apache-airflow = "^2.8.1"
 apache-airflow-providers-postgres = "^5.12.0"
 apache-airflow-providers-amazon = "^8.28.0"
+apache-airflow-providers-hashicorp = "^2.2.0"
 pandas = "^2.2.3"
 
 [tool.poetry.group.dev.dependencies]
