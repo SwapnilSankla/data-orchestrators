@@ -17,8 +17,10 @@ x-airflow-common:
     CSV_FILE_PATH:
     CLEANED_CSV_FILE_PATH:
     POSTGRES_CONN_ID:
+    PYTHONPATH: /opt/airflow/src
 
   volumes:
+    - ${AIRFLOW_PROJ_DIR:-.}/src:/opt/airflow/src
     - ${AIRFLOW_PROJ_DIR:-.}/src/airflow_project/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/src/airflow_project/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/src/airflow_project/config:/opt/airflow/config

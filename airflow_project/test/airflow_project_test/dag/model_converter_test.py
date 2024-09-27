@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from airflow_project_test.util.project_path import ProjectPath
 
-from airflow_project.dags.download_parquet_from_s3_push_to_postgres import ModelConverter
+from airflow_project.plugins.custom_operator.model_converter import ModelConverter
 
 # pylint: disable=W0621: redefined-outer-name
 @pytest.fixture

@@ -1,39 +1,15 @@
 import os
 from datetime import datetime, timedelta
+
 from airflow import DAG
-from airflow.models import BaseOperator
-from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
+from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-import pandas
 
-
-class ParquetToCsvOperator(BaseOperator):
-    def __init__(self, parquet_file_path_provider_task_id, csv_file_path, **kwargs):
-        super().__init__(**kwargs)
-        self.csv_file_path = csv_file_path
-        self.parquet_file_path_provider_task_id = parquet_file_path_provider_task_id
-
-    def execute(self, context):
-        parquet_file_path = context['ti'].xcom_pull(task_ids=self.parquet_file_path_provider_task_id)
-        df = pandas.read_parquet(parquet_file_path)
-        df.to_csv(self.csv_file_path, index=False)
-
-
-class ModelConverter(BaseOperator):
-    def __init__(self, csv_file_path, csv_cleaned_file_path, **kwargs):
-        super().__init__(**kwargs)
-        self.csv_file_path = csv_file_path
-        self.csv_cleaned_file_path = csv_cleaned_file_path
-
-    def execute(self, context):
-        df = pandas.read_csv(self.csv_file_path)
-        df['name'] = df['First name'] + ' ' + df['last name']
-        df.drop(columns=['First name', 'last name'], inplace=True)
-        df.to_csv(self.csv_cleaned_file_path, index=False)
-
+from airflow_project.plugins.custom_operator.model_converter import ModelConverter
+from airflow_project.plugins.custom_operator.parquet_to_csv_converter import ParquetToCsvOperator
 
 default_args = {
     'owner': 'airflow',

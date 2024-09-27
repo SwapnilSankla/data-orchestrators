@@ -1,6 +1,5 @@
 ### TODOs
 
-- Extract ParquetToCsvOperator and ModelConverter to custom operators. Check why those imports are not working inside docker compose
 - Why Pycharm fails to detect import `from airflow_project_test.util.project_path import ProjectPath`
 - Write E2E tests for the project
 - Use secret backend for Airflow
