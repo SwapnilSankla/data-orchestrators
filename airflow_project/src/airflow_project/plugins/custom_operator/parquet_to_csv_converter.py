@@ -9,6 +9,8 @@ class ParquetToCsvOperator(BaseOperator):
         self.parquet_file_path_provider_task_id = parquet_file_path_provider_task_id
 
     def execute(self, context):
-        parquet_file_path = context['ti'].xcom_pull(task_ids=self.parquet_file_path_provider_task_id)
+        parquet_file_path = context["ti"].xcom_pull(
+            task_ids=self.parquet_file_path_provider_task_id
+        )
         df = pandas.read_parquet(parquet_file_path)
         df.to_csv(self.csv_file_path, index=False)
